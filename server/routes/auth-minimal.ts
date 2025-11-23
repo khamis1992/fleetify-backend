@@ -26,6 +26,21 @@ if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
   logger.warn('Supabase not configured - auth routes will be disabled');
 }
 
+// Validation schemas
+const loginSchema = z.object({
+  email: z.string().email('Invalid email format'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+const registerSchema = z.object({
+  email: z.string().email('Invalid email format'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  companyName: z.string().min(1, 'Company name is required'),
+  phone: z.string().optional(),
+});
+
 // Test endpoint
 router.get('/test', (req, res) => {
   res.json({
