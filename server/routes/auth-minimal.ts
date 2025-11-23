@@ -49,7 +49,44 @@ router.get('/test', (req, res) => {
   });
 });
 
-// Simple login endpoint for testing
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Authenticate user
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       $ref: '#/components/schemas/User'
+ *                     expiresIn:
+ *                       type: number
+ *       401:
+ *         description: Invalid credentials
+ */
 router.post('/login', authRateLimit, asyncHandler(async (req, res) => {
   try {
     const { email, password } = loginSchema.parse(req.body);
