@@ -24,23 +24,12 @@ declare global {
   }
 }
 
-// Supabase clients - only create if environment variables are available
-let supabase: any = null;
-let supabaseAnon: any = null;
+// Supabase clients
+const supabaseUrl = process.env.SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
-}
-
-if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
-  supabaseAnon = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_ANON_KEY
-  );
-}
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+const supabaseAnon = createClient(supabaseUrl, process.env.SUPABASE_ANON_KEY!);
 
 /**
  * Validates JWT token from HTTP-only cookie

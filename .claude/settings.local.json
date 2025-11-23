@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(claude mcp add:*)",
+      "Bash(claude mcp list:*)",
+      "Bash(npx @railway/mcp-server:*)",
+      "Bash(railway --version:*)",
+      "Bash(railway whoami:*)",
+      "Bash(railway init:*)",
+      "Bash(railway list:*)",
+      "Bash(railway link:*)",
+      "Bash(railway status:*)",
+      "Bash(railway new:*)",
+      "Bash(railway variables list:*)",
+      "Bash(railway variables --help:*)",
+      "Bash(railway:*)",
+      "Bash(curl:*)",
+      "Bash(vercel:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
