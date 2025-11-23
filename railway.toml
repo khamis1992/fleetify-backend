@@ -3,7 +3,7 @@ builder = "NIXPACKS"
 
 [deploy]
 healthcheckPath = "/health"
-healthcheckTimeout = 100
+healthcheckTimeout = 30
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 
@@ -20,3 +20,4 @@ PORT = "3001"
 [services.health_checks.http]
 path = "/health"
 port = 3001
+timeout = 30

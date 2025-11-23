@@ -24,9 +24,12 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// CORS configuration
+// CORS configuration - allow Railway health checks
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: [
+    process.env.FRONTEND_URL || '*',
+    'https://healthcheck.railway.app'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -57,8 +60,9 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Health check endpoint
+// Health check endpoint - Railway compatible
 app.get('/health', (req, res) => {
+  // Always return 200 status for Railway health check
   res.status(200).json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
@@ -67,6 +71,15 @@ app.get('/health', (req, res) => {
     uptime: process.uptime(),
     memory: process.memoryUsage(),
     port: process.env.PORT || 3001
+  });
+});
+
+// Root health check - Railway sometimes hits /
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    message: 'Fleetify Backend API',
+    timestamp: new Date().toISOString()
   });
 });
 
