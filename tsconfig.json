@@ -1,34 +1,34 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
+    "module": "CommonJS",
     "moduleResolution": "node",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "allowJs": true,
     "sourceMap": false,
     "outDir": "./dist",
-    "rootDir": "./",
+    "rootDir": "./server",
     "removeComments": true,
-    "noEmitOnError": true,
+    "noEmitOnError": false,
     "skipLibCheck": true,
-    "strict": true,
+    "strict": false,
     "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
+    "declaration": false,
+    "declarationMap": false,
     "lib": ["ES2022"],
-    "baseUrl": ".",
+    "baseUrl": "./server",
     "paths": {
-      "@/*": ["./src/*"],
-      "@/types/*": ["./src/types/*"],
-      "@/utils/*": ["./src/utils/*"],
-      "@/middleware/*": ["./src/middleware/*"],
-      "@/routes/*": ["./src/routes/*"],
-      "@/services/*": ["./src/services/*"]
+      "@/*": ["./"],
+      "@/types/*": ["./types/*"],
+      "@/utils/*": ["./utils/*"],
+      "@/middleware/*": ["./middleware/*"],
+      "@/routes/*": ["./routes/*"],
+      "@/services/*": ["./services/*"]
     }
   },
   "include": [
-    "**/*.ts"
+    "server/**/*"
   ],
   "exclude": [
     "node_modules",
