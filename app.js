@@ -19,21 +19,21 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Import routes using static imports (avoiding dynamic import issues)
-import authRoutes from './src/server/routes/auth.js';
-import contractsRoutes from './src/server/routes/contracts.js';
-import customersRoutes from './src/server/routes/customers.js';
-import vehiclesRoutes from './src/server/routes/vehicles.js';
-import employeesRoutes from './src/server/routes/employees.js';
-import violationsRoutes from './src/server/routes/violations.js';
-import invoicesRoutes from './src/server/routes/invoices.js';
-import dashboardRoutes from './src/server/routes/dashboard.js';
+import authRoutes from './server/routes/auth.js';
+import contractsRoutes from './server/routes/contracts.js';
+import customersRoutes from './server/routes/customers.js';
+import vehiclesRoutes from './server/routes/vehicles.js';
+import employeesRoutes from './server/routes/employees.js';
+import violationsRoutes from './server/routes/violations.js';
+import invoicesRoutes from './server/routes/invoices.js';
+import dashboardRoutes from './server/routes/dashboard.js';
 
 // Import middleware
-import { errorHandler } from './src/server/middleware/errorHandler.js';
-import { requestLogger } from './src/server/middleware/requestLogger.js';
-import { validateAuth } from './src/server/middleware/auth.js';
-import { cacheMiddleware } from './src/server/middleware/cache.js';
-import { rateLimitConfig } from './src/server/config/rateLimit.js';
+import { errorHandler } from './server/middleware/errorHandler.js';
+import { requestLogger } from './server/middleware/requestLogger.js';
+import { validateAuth } from './server/middleware/auth.js';
+import { cacheMiddleware } from './server/middleware/cache.js';
+import { rateLimitConfig } from './server/config/rateLimit.js';
 
 // Load environment variables
 config();
@@ -116,7 +116,7 @@ const swaggerOptions = {
       },
     },
   },
-  apis: ['./src/server/routes/*.ts'],
+  apis: ['./server/routes/*.ts'],
 };
 
 const specs = swaggerJsdoc(swaggerOptions);
