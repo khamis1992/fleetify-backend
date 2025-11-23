@@ -99,7 +99,7 @@ router.post('/login', authRateLimit, asyncHandler(async (req, res) => {
     .single();
 
   if (profileError || !profile) {
-    throw new AppError('Invalid email or password', 401, 'INVALID_CREDENTIALS');
+    throw new AppError('Invalid email or password', 401, true, 'INVALID_CREDENTIALS');
   }
 
   // For this implementation, we'll use Supabase auth for password verification

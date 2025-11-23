@@ -223,7 +223,7 @@ export async function getUserPermissions(userId: string, companyId: string): Pro
     }
 
     // Get base permissions for role
-    let permissions = ROLES[profile.role as Role] || [];
+    let permissions = [...(ROLES[profile.role as Role] || [])];
 
     // Add custom permissions if any
     if (profile.custom_permissions && Array.isArray(profile.custom_permissions)) {
@@ -314,7 +314,7 @@ export async function grantCustomPermission(
 
       await supabase
         .from('profiles')
-        .update({ custom_permissions })
+        .update({ custom_permissions: customPermissions })
         .eq('id', userId);
 
       // Clear cache for this user
@@ -352,7 +352,7 @@ export async function revokeCustomPermission(
 
     await supabase
       .from('profiles')
-      .update({ custom_permissions })
+      .update({ custom_permissions: customPermissions })
       .eq('id', userId);
 
     // Clear cache for this user
@@ -376,5 +376,8 @@ export function getAllPermissions(): Record<string, string> {
  * Get all available roles with their permissions
  */
 export function getAllRoles(): Record<string, string[]> {
-  return ROLES;
+  return Object.keys(ROLES).reduce((acc, role) => {
+    acc[role] = [...ROLES[role as Role]];
+    return acc;
+  }, {} as Record<string, string[]>);
 }

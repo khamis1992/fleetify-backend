@@ -1,1 +1,1 @@
-web: tsx server/simple-health-check.ts
+web: tsx server/index.ts

@@ -20,7 +20,6 @@ class RedisClient {
 
       this.client = new Redis(redisUrl, {
         password: redisPassword,
-        retryDelayOnFailover: 100,
         enableReadyCheck: true,
         maxRetriesPerRequest: 3,
         lazyConnect: true,
@@ -91,7 +90,18 @@ class RedisClient {
 // Singleton instance
 const redisClientInstance = new RedisClient();
 
-export const redisClient = redisClientInstance.getClient();
+// Export with fallback for when Redis is not available
+export const redisClient = new Proxy({} as Redis, {
+  get(target, prop) {
+    try {
+      return redisClientInstance.getClient()[prop as keyof Redis];
+    } catch (error) {
+      logger.warn('Redis not available, caching disabled', { error });
+      // Return a no-op function for Redis methods
+      return (...args: any[]) => Promise.resolve();
+    }
+  }
+});
 
 // Redis utility functions
 export const cacheHelpers = {
@@ -106,8 +116,8 @@ export const cacheHelpers = {
         await redisClient.set(key, value);
       }
     } catch (error) {
-      logger.error('Redis SET error', { key, error });
-      throw error;
+      logger.warn('Redis SET error - caching disabled', { key, error });
+      // Don't throw - just disable caching
     }
   },
 
@@ -118,8 +128,8 @@ export const cacheHelpers = {
     try {
       return await redisClient.get(key);
     } catch (error) {
-      logger.error('Redis GET error', { key, error });
-      return null;
+      logger.warn('Redis GET error - cache miss', { key, error });
+      return null; // Return null to indicate cache miss
     }
   },
 
@@ -130,8 +140,8 @@ export const cacheHelpers = {
     try {
       await redisClient.del(key);
     } catch (error) {
-      logger.error('Redis DEL error', { key, error });
-      throw error;
+      logger.warn('Redis DEL error - cache invalidation skipped', { key, error });
+      // Don't throw - just skip cache invalidation
     }
   },
 
@@ -144,8 +154,8 @@ export const cacheHelpers = {
         await redisClient.del(...keys);
       }
     } catch (error) {
-      logger.error('Redis DELMANY error', { keys, error });
-      throw error;
+      logger.warn('Redis DELMANY error - cache invalidation skipped', { keys, error });
+      // Don't throw - just skip cache invalidation
     }
   },
 
@@ -156,7 +166,7 @@ export const cacheHelpers = {
     try {
       return await redisClient.keys(pattern);
     } catch (error) {
-      logger.error('Redis KEYS error', { pattern, error });
+      logger.warn('Redis KEYS error - returning empty array', { pattern, error });
       return [];
     }
   },
@@ -168,8 +178,8 @@ export const cacheHelpers = {
     try {
       await redisClient.hset(key, field, value);
     } catch (error) {
-      logger.error('Redis HSET error', { key, field, error });
-      throw error;
+      logger.warn('Redis HSET error - caching disabled', { key, field, error });
+      // Don't throw - just disable caching
     }
   },
 
@@ -216,8 +226,8 @@ export const cacheHelpers = {
     try {
       return await redisClient.incr(key);
     } catch (error) {
-      logger.error('Redis INCR error', { key, error });
-      throw error;
+      logger.warn('Redis INCR error - returning 0', { key, error });
+      return 0; // Return default value
     }
   },
 
@@ -228,8 +238,8 @@ export const cacheHelpers = {
     try {
       return await redisClient.incrby(key, amount);
     } catch (error) {
-      logger.error('Redis INCRBY error', { key, amount, error });
-      throw error;
+      logger.warn('Redis INCRBY error - returning 0', { key, amount, error });
+      return 0; // Return default value
     }
   },
 
@@ -253,8 +263,8 @@ export const cacheHelpers = {
     try {
       await redisClient.expire(key, ttl);
     } catch (error) {
-      logger.error('Redis EXPIRE error', { key, ttl, error });
-      throw error;
+      logger.warn('Redis EXPIRE error - skipping expiration', { key, ttl, error });
+      // Don't throw - just skip expiration
     }
   },
 

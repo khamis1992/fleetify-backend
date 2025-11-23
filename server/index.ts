@@ -118,13 +118,13 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // API routes
 app.use('/api/auth', authRoutes);
-app.use('/api/contracts', validateAuth, cacheMiddleware(300), contractsRoutes);
-app.use('/api/customers', validateAuth, cacheMiddleware(600), customersRoutes);
-app.use('/api/vehicles', validateAuth, cacheMiddleware(300), vehiclesRoutes);
-app.use('/api/employees', validateAuth, cacheMiddleware(600), employeesRoutes);
-app.use('/api/violations', validateAuth, cacheMiddleware(300), violationsRoutes);
-app.use('/api/invoices', validateAuth, cacheMiddleware(300), invoicesRoutes);
-app.use('/api/dashboard', validateAuth, cacheMiddleware(180), dashboardRoutes);
+app.use('/api/contracts', validateAuth, cacheMiddleware({ ttl: 300 }), contractsRoutes);
+app.use('/api/customers', validateAuth, cacheMiddleware({ ttl: 600 }), customersRoutes);
+app.use('/api/vehicles', validateAuth, cacheMiddleware({ ttl: 300 }), vehiclesRoutes);
+app.use('/api/employees', validateAuth, cacheMiddleware({ ttl: 600 }), employeesRoutes);
+app.use('/api/violations', validateAuth, cacheMiddleware({ ttl: 300 }), violationsRoutes);
+app.use('/api/invoices', validateAuth, cacheMiddleware({ ttl: 300 }), invoicesRoutes);
+app.use('/api/dashboard', validateAuth, cacheMiddleware({ ttl: 180 }), dashboardRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

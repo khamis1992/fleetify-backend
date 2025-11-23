@@ -5,6 +5,7 @@
 import rateLimit from 'express-rate-limit';
 import { RateLimiterRedis } from 'rate-limiter-flexible';
 import { redisClient } from '../utils/redis';
+import { logger } from '../utils/logger';
 
 // General API rate limiting
 export const rateLimitConfig = {
@@ -74,23 +75,33 @@ export const modifyRateLimit = rateLimit({
 
 // Redis-based advanced rate limiter for user-specific limits
 export const createUserRateLimiter = () => {
-  return new RateLimiterRedis({
-    storeClient: redisClient,
-    keyPrefix: 'user_rate_limit',
-    points: 1000, // Number of requests
-    duration: 3600, // Per 1 hour
-    blockDuration: 3600, // Block for 1 hour if limit exceeded
-  });
+  try {
+    return new RateLimiterRedis({
+      storeClient: redisClient,
+      keyPrefix: 'user_rate_limit',
+      points: 1000, // Number of requests
+      duration: 3600, // Per 1 hour
+      blockDuration: 3600, // Block for 1 hour if limit exceeded
+    });
+  } catch (error) {
+    logger.warn('Redis not available for user rate limiting, using memory-based limiter');
+    return null; // Fallback to memory-based rate limiting
+  }
 };
 
 export const createCompanyRateLimiter = () => {
-  return new RateLimiterRedis({
-    storeClient: redisClient,
-    keyPrefix: 'company_rate_limit',
-    points: 10000, // Number of requests
-    duration: 3600, // Per 1 hour
-    blockDuration: 1800, // Block for 30 minutes if limit exceeded
-  });
+  try {
+    return new RateLimiterRedis({
+      storeClient: redisClient,
+      keyPrefix: 'company_rate_limit',
+      points: 10000, // Number of requests
+      duration: 3600, // Per 1 hour
+      blockDuration: 1800, // Block for 30 minutes if limit exceeded
+    });
+  } catch (error) {
+    logger.warn('Redis not available for company rate limiting, using memory-based limiter');
+    return null; // Fallback to memory-based rate limiting
+  }
 };
 
 // API endpoint specific rate limiters

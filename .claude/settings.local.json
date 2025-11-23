@@ -17,7 +17,10 @@
       "Bash(curl:*)",
       "Bash(vercel:*)",
       "Bash(git fetch:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(npm run type-check:*)"
     ],
     "deny": [],
     "ask": []

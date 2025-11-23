@@ -88,7 +88,8 @@ export const cacheMiddleware = (options: CacheOptions = {}) => {
 
         res.set(parsed.headers);
         res.set('X-Cache', 'HIT');
-        return res.status(parsed.status).json(parsed.data);
+        res.status(parsed.status).json(parsed.data);
+        return;
       }
 
       logger.debug('Cache miss', { key: cacheKey, url: req.url });
@@ -139,13 +140,16 @@ export const cacheMiddleware = (options: CacheOptions = {}) => {
 /**
  * Invalidate cache by pattern
  */
-export const invalidateCache = async (pattern: string): Promise<void> => {
+export const invalidateCache = async (pattern: string | string[]): Promise<void> => {
   try {
-    const keys = await redisClient.keys(`cache:${pattern}*`);
+    const patterns = Array.isArray(pattern) ? pattern : [pattern];
 
-    if (keys.length > 0) {
-      await redisClient.del(...keys);
-      logger.info('Cache invalidated', { pattern, keysCount: keys.length });
+    for (const p of patterns) {
+      const keys = await redisClient.keys(`cache:${p}*`);
+      if (keys.length > 0) {
+        await redisClient.del(...keys);
+        logger.info('Cache invalidated', { pattern: p, keysCount: keys.length });
+      }
     }
   } catch (error) {
     logger.error('Cache invalidation error', { pattern, error });

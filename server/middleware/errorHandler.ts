@@ -23,15 +23,27 @@ export class AppError extends Error implements ApiError {
   constructor(
     message: string,
     statusCode: number = 500,
-    isOperational: boolean = true,
+    isOperationalOrCode?: boolean | string,
     code?: string,
     details?: any
   ) {
     super(message);
     this.statusCode = statusCode;
-    this.isOperational = isOperational;
-    this.code = code;
-    this.details = details;
+
+    // Handle overloaded parameters
+    if (typeof isOperationalOrCode === 'boolean') {
+      this.isOperational = isOperationalOrCode;
+      this.code = code;
+      this.details = details;
+    } else if (typeof isOperationalOrCode === 'string') {
+      this.isOperational = true; // default
+      this.code = isOperationalOrCode;
+      this.details = code;
+    } else {
+      this.isOperational = true; // default
+      this.code = code;
+      this.details = details;
+    }
 
     Error.captureStackTrace(this, this.constructor);
   }

@@ -43,14 +43,14 @@ export const validateAuth = async (
     const token = req.cookies?.auth_token;
 
     if (!token) {
-      throw new AppError('Authentication required', 401, 'MISSING_TOKEN');
+      throw new AppError('Authentication required', 401, true, 'MISSING_TOKEN');
     }
 
     // Verify JWT token
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
 
     if (!decoded.userId) {
-      throw new AppError('Invalid authentication token', 401, 'INVALID_TOKEN');
+      throw new AppError('Invalid authentication token', 401, true, 'INVALID_TOKEN');
     }
 
     // Get user profile from Supabase
@@ -70,7 +70,7 @@ export const validateAuth = async (
       .single();
 
     if (profileError || !profile) {
-      throw new AppError('User not found or inactive', 401, 'USER_NOT_FOUND');
+      throw new AppError('User not found or inactive', 401, true, 'USER_NOT_FOUND');
     }
 
     // Get user permissions
@@ -96,9 +96,9 @@ export const validateAuth = async (
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
-      next(new AppError('Invalid authentication token', 401, 'INVALID_TOKEN'));
+      next(new AppError('Invalid authentication token', 401, true, 'INVALID_TOKEN'));
     } else if (error instanceof jwt.TokenExpiredError) {
-      next(new AppError('Authentication token expired', 401, 'TOKEN_EXPIRED'));
+      next(new AppError('Authentication token expired', 401, true, 'TOKEN_EXPIRED'));
     } else {
       next(error);
     }
@@ -122,7 +122,7 @@ export const requirePermission = (permission: string) => {
         path: req.path,
       });
 
-      return next(new AppError('Insufficient permissions', 403, 'INSUFFICIENT_PERMISSIONS'));
+      return next(new AppError('Insufficient permissions', 403, true, 'INSUFFICIENT_PERMISSIONS'));
     }
 
     next();
@@ -148,7 +148,7 @@ export const requireRole = (roles: string | string[]) => {
         path: req.path,
       });
 
-      return next(new AppError('Insufficient role privileges', 403, 'INSUFFICIENT_ROLE'));
+      return next(new AppError('Insufficient role privileges', 403, true, 'INSUFFICIENT_ROLE'));
     }
 
     next();
@@ -185,7 +185,7 @@ export const requireCompanyAccess = async (
         path: req.path,
       });
 
-      return next(new AppError('Access denied to this company', 403, 'COMPANY_ACCESS_DENIED'));
+      return next(new AppError('Access denied to this company', 403, true, 'COMPANY_ACCESS_DENIED'));
     }
 
     next();
