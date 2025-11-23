@@ -24,12 +24,23 @@ declare global {
   }
 }
 
-// Supabase clients
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+// Supabase clients - only create if environment variables are available
+let supabase: ReturnType<typeof createClient> | null = null;
+let supabaseAnon: ReturnType<typeof createClient> | null = null;
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-const supabaseAnon = createClient(supabaseUrl, process.env.SUPABASE_ANON_KEY!);
+if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+}
+
+if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
+  supabaseAnon = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_ANON_KEY
+  );
+}
 
 /**
  * Validates JWT token from HTTP-only cookie
@@ -51,6 +62,11 @@ export const validateAuth = async (
 
     if (!decoded.userId) {
       throw new AppError('Invalid authentication token', 401, true, 'INVALID_TOKEN');
+    }
+
+    // Check if Supabase is configured
+    if (!supabase) {
+      throw new AppError('Authentication service not available', 503, true, 'SERVICE_UNAVAILABLE');
     }
 
     // Get user profile from Supabase
@@ -211,7 +227,7 @@ export const optionalAuth = async (
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
 
-    if (decoded.userId) {
+    if (decoded.userId && supabase) {
       const { data: profile } = await supabase
         .from('profiles')
         .select('id, email, role, company_id, is_active')

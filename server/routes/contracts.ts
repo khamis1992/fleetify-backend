@@ -13,10 +13,18 @@ import { logger } from '../utils/logger';
 import { cacheHelpers } from '../utils/redis';
 
 const router = Router();
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
+// Only create Supabase client if environment variables are available
+let supabase: ReturnType<typeof createClient> | null = null;
+
+if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+} else {
+  logger.warn('Supabase not configured - contracts routes will be disabled');
+}
 
 // Validation schemas
 const createContractSchema = z.object({
@@ -108,6 +116,11 @@ const queryContractsSchema = z.object({
  *         description: Contracts retrieved successfully
  */
 router.get('/', requirePermission('contracts:view'), asyncHandler(async (req, res) => {
+  // Check if Supabase is configured
+  if (!supabase) {
+    throw new AppError('Database service not available', 503, true, 'SERVICE_UNAVAILABLE');
+  }
+
   const {
     page,
     limit,
