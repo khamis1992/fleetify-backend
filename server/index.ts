@@ -15,7 +15,7 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 
 // Import routes
-// import authRoutes from './routes/auth'; // Temporarily disabled for debugging
+import authRoutes from './routes/auth-minimal'; // Using minimal version for debugging
 import contractsRoutes from './routes/contracts';
 import customersRoutes from './routes/customers';
 import vehiclesRoutes from './routes/vehicles';
@@ -117,11 +117,7 @@ const specs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // API routes
-// Temporary auth test route
-app.use('/api/auth', (req, res) => {
-  res.json({ message: 'Auth routes working', method: req.method, path: req.path });
-});
-// app.use('/api/auth', authRoutes); // Temporarily disabled for debugging
+app.use('/api/auth', authRoutes);
 app.use('/api/contracts', validateAuth, cacheMiddleware({ ttl: 300 }), contractsRoutes);
 app.use('/api/customers', validateAuth, cacheMiddleware({ ttl: 600 }), customersRoutes);
 app.use('/api/vehicles', validateAuth, cacheMiddleware({ ttl: 300 }), vehiclesRoutes);
