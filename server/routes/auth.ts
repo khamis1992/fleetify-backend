@@ -13,10 +13,15 @@ import { logger } from '../utils/logger';
 import { cacheHelpers } from '../utils/redis';
 
 const router = Router();
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
+// Only create Supabase client if environment variables are available
+let supabase: any = null;
+if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+}
 
 // Validation schemas
 const loginSchema = z.object({

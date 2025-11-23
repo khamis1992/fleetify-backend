@@ -8,15 +8,20 @@ import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { asyncHandler, AppError } from '../middleware/errorHandler';
 import { requirePermission, requireCompanyAccess } from '../middleware/auth';
-import { invalidateCache } from '../middleware/cache';
+import { invalidateCacheMiddleware } from '../middleware/cache';
 import { logger } from '../utils/logger';
 import { cacheHelpers } from '../utils/redis';
 
 const router = Router();
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
+// Only create Supabase client if environment variables are available
+let supabase: any = null;
+if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+}
 
 // Validation schemas
 const createContractSchema = z.object({
@@ -316,7 +321,7 @@ router.get('/:id', requirePermission('contracts:view'), asyncHandler(async (req,
  *       400:
  *         description: Bad request
  */
-router.post('/', requirePermission('contracts:create'), invalidateCache(['contracts:*']), asyncHandler(async (req, res) => {
+router.post('/', requirePermission('contracts:create'), invalidateCacheMiddleware(['contracts:*']), asyncHandler(async (req, res) => {
   const validatedData = createContractSchema.parse(req.body);
 
   // Check if contract number already exists
@@ -430,7 +435,7 @@ router.post('/', requirePermission('contracts:create'), invalidateCache(['contra
  *       404:
  *         description: Contract not found
  */
-router.put('/:id', requirePermission('contracts:edit'), invalidateCache(['contracts:*']), asyncHandler(async (req, res) => {
+router.put('/:id', requirePermission('contracts:edit'), invalidateCacheMiddleware(['contracts:*']), asyncHandler(async (req, res) => {
   const { id } = req.params;
   const validatedData = updateContractSchema.parse(req.body);
 
@@ -515,7 +520,7 @@ router.put('/:id', requirePermission('contracts:edit'), invalidateCache(['contra
  *       403:
  *         description: Cannot delete contract with active invoices
  */
-router.delete('/:id', requirePermission('contracts:delete'), invalidateCache(['contracts:*']), asyncHandler(async (req, res) => {
+router.delete('/:id', requirePermission('contracts:delete'), invalidateCacheMiddleware(['contracts:*']), asyncHandler(async (req, res) => {
   const { id } = req.params;
 
   // Check if contract exists and belongs to user's company

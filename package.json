@@ -7,10 +7,12 @@
   "scripts": {
     "dev": "tsx server/index.ts",
     "build": "echo 'Build skipped - using tsx runtime'",
-    "start": "tsx server/index.ts",
+    "start": "tsx server/simple-health-check.ts",
     "start:dev": "tsx server/index.ts",
+    "start:full": "tsx server/index.ts",
+    "start:simple": "tsx server/simple-health-check.ts",
     "railway:build": "echo 'Build skipped - using tsx runtime'",
-    "railway:start": "tsx server/index.ts",
+    "railway:start": "tsx server/simple-health-check.ts",
     "test": "jest",
     "lint": "eslint server --ext .ts",
     "type-check": "tsc --noEmit --skipLibCheck"

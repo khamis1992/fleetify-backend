@@ -91,7 +91,17 @@ class RedisClient {
 // Singleton instance
 const redisClientInstance = new RedisClient();
 
-export const redisClient = redisClientInstance.getClient();
+// Export a function to get the client rather than getting it immediately
+export const getRedisClient = (): Redis | null => {
+  try {
+    return redisClientInstance.getClient();
+  } catch {
+    return null;
+  }
+};
+
+// For backwards compatibility, but make it safe
+export const redisClient = getRedisClient();
 
 // Redis utility functions
 export const cacheHelpers = {
@@ -100,14 +110,17 @@ export const cacheHelpers = {
    */
   async set(key: string, value: string, ttl?: number): Promise<void> {
     try {
+      const client = getRedisClient();
+      if (!client) return; // Silently fail if Redis not available
+
       if (ttl) {
-        await redisClient.setex(key, ttl, value);
+        await client.setex(key, ttl, value);
       } else {
-        await redisClient.set(key, value);
+        await client.set(key, value);
       }
     } catch (error) {
       logger.error('Redis SET error', { key, error });
-      throw error;
+      // Don't throw error, just log it
     }
   },
 
@@ -116,7 +129,9 @@ export const cacheHelpers = {
    */
   async get(key: string): Promise<string | null> {
     try {
-      return await redisClient.get(key);
+      const client = getRedisClient();
+      if (!client) return null;
+      return await client.get(key);
     } catch (error) {
       logger.error('Redis GET error', { key, error });
       return null;

@@ -3,7 +3,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { redisClient } from '../utils/redis';
+import { getRedisClient } from '../utils/redis';
 import { logger } from '../utils/logger';
 import crypto from 'crypto';
 
@@ -79,7 +79,9 @@ export const cacheMiddleware = (options: CacheOptions = {}) => {
 
     try {
       // Try to get cached response
-      const cached = await redisClient.get(cacheKey);
+      const client = getRedisClient();
+      if (!client) return next(); // Skip cache if Redis not available
+      const cached = await client.get(cacheKey);
 
       if (cached) {
         const parsed = JSON.parse(cached);
@@ -118,11 +120,14 @@ export const cacheMiddleware = (options: CacheOptions = {}) => {
           };
 
           // Cache asynchronously
-          redisClient
-            .setex(cacheKey, ttl, JSON.stringify(cacheData))
-            .catch(error => {
-              logger.error('Cache write error', { key: cacheKey, error });
-            });
+          const cacheClient = getRedisClient();
+          if (cacheClient) {
+            cacheClient
+              .setex(cacheKey, ttl, JSON.stringify(cacheData))
+              .catch(error => {
+                logger.error('Cache write error', { key: cacheKey, error });
+              });
+          }
         }
 
         return originalJson.call(this, data);
@@ -141,10 +146,13 @@ export const cacheMiddleware = (options: CacheOptions = {}) => {
  */
 export const invalidateCache = async (pattern: string): Promise<void> => {
   try {
-    const keys = await redisClient.keys(`cache:${pattern}*`);
+    const client = getRedisClient();
+    if (!client) return; // Silently fail if Redis not available
+
+    const keys = await client.keys(`cache:${pattern}*`);
 
     if (keys.length > 0) {
-      await redisClient.del(...keys);
+      await client.del(...keys);
       logger.info('Cache invalidated', { pattern, keysCount: keys.length });
     }
   } catch (error) {
