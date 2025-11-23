@@ -15,7 +15,9 @@
       "Bash(railway variables --help:*)",
       "Bash(railway:*)",
       "Bash(curl:*)",
-      "Bash(vercel:*)"
+      "Bash(vercel:*)",
+      "Bash(git fetch:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
