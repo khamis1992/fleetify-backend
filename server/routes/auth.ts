@@ -88,29 +88,75 @@ router.get('/test', (req, res) => {
  *         description: Invalid credentials
  */
 router.post('/login', authRateLimit, asyncHandler(async (req, res) => {
-  try {
-    const { email, password } = loginSchema.parse(req.body);
+  const { email, password } = loginSchema.parse(req.body);
 
-    // Check if Supabase is configured
-    if (!supabase) {
-      throw new AppError('Authentication service not available', 503, true, 'SERVICE_UNAVAILABLE');
-    }
-
-    res.json({
-      success: true,
-      message: 'Login endpoint working',
-      data: { email, received: true }
-    });
-  } catch (error) {
-    throw error;
+  // Check if Supabase is configured
+  if (!supabase) {
+    throw new AppError('Authentication service not available', 503, true, 'SERVICE_UNAVAILABLE');
   }
+
+  // For now, return a simple success response
+  // TODO: Implement full authentication with Supabase
+  res.json({
+    success: true,
+    message: 'Login endpoint functional',
+    data: {
+      email,
+      status: 'authenticated',
+      timestamp: new Date().toISOString()
+    }
+  });
+}));
+
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout user
+ *     tags: [Authentication]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ */
+router.post('/logout', asyncHandler(async (req, res) => {
+  res.json({
+    success: true,
+    message: 'Logout successful',
+  });
+}));
+
+/**
+ * @swagger
+ * /api/auth/me:
+ *   get:
+ *     summary: Get current user info
+ *     tags: [Authentication]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: User info retrieved successfully
+ *       401:
+ *         description: Not authenticated
+ */
+router.get('/me', asyncHandler(async (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      message: 'User endpoint functional',
+      authenticated: false,
+      timestamp: new Date().toISOString()
+    }
+  });
 }));
 
 // Default endpoint
 router.get('/', (req, res) => {
   res.json({
     message: 'Auth routes endpoint',
-    availableRoutes: ['/test', '/login', '/register']
+    availableRoutes: ['/test', '/login', '/logout', '/me', '/register']
   });
 });
 
