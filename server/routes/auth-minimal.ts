@@ -49,6 +49,26 @@ router.get('/test', (req, res) => {
   });
 });
 
+// Simple login endpoint for testing
+router.post('/login', authRateLimit, asyncHandler(async (req, res) => {
+  try {
+    const { email, password } = loginSchema.parse(req.body);
+
+    // Check if Supabase is configured
+    if (!supabase) {
+      throw new AppError('Authentication service not available', 503, true, 'SERVICE_UNAVAILABLE');
+    }
+
+    res.json({
+      success: true,
+      message: 'Login endpoint working',
+      data: { email, received: true }
+    });
+  } catch (error) {
+    throw error;
+  }
+}));
+
 // Default endpoint
 router.get('/', (req, res) => {
   res.json({
