@@ -127,7 +127,7 @@ app.use('/api/invoices', validateAuth, cacheMiddleware({ ttl: 300 }), invoicesRo
 app.use('/api/dashboard', validateAuth, cacheMiddleware({ ttl: 180 }), dashboardRoutes);
 
 // 404 handler
-app.use('*', (req, res) => {
+app.use((req, res) => {
   res.status(404).json({
     error: 'Endpoint not found',
     message: `Cannot ${req.method} ${req.originalUrl}`,
