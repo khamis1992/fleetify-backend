@@ -4,10 +4,15 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+// Only create Supabase client if environment variables are available
+let supabase: ReturnType<typeof createClient> | null = null;
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+}
 
 type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 
@@ -46,6 +51,11 @@ class Logger {
   private async writeToDatabase(entry: LogEntry): Promise<void> {
     // Only write logs to database in production or when explicitly enabled
     if (process.env.LOG_TO_DATABASE !== 'true' && process.env.NODE_ENV !== 'production') {
+      return;
+    }
+
+    // Skip if Supabase is not configured
+    if (!supabase) {
       return;
     }
 

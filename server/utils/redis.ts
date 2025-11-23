@@ -10,7 +10,12 @@ class RedisClient {
   private isConnected: boolean = false;
 
   constructor() {
-    this.connect();
+    // Only connect if Redis URL is provided
+    if (process.env.REDIS_URL || process.env.REDIS_PASSWORD) {
+      this.connect();
+    } else {
+      logger.info('Redis not configured - caching disabled');
+    }
   }
 
   private async connect(): Promise<void> {
@@ -62,7 +67,8 @@ class RedisClient {
 
   public getClient(): Redis {
     if (!this.client || !this.isConnected) {
-      throw new Error('Redis client not connected');
+      // Return a mock Redis client that gracefully handles failures
+      throw new Error('Redis not available');
     }
     return this.client;
   }

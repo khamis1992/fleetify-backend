@@ -13,10 +13,18 @@ import { logger } from '../utils/logger';
 import { cacheHelpers } from '../utils/redis';
 
 const router = Router();
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
+// Only create Supabase client if environment variables are available
+let supabase: ReturnType<typeof createClient> | null = null;
+
+if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+} else {
+  logger.warn('Supabase not configured - auth routes will be disabled');
+}
 
 // Validation schemas
 const loginSchema = z.object({
@@ -82,6 +90,11 @@ const confirmResetSchema = z.object({
  */
 router.post('/login', authRateLimit, asyncHandler(async (req, res) => {
   const { email, password } = loginSchema.parse(req.body);
+
+  // Check if Supabase is configured
+  if (!supabase) {
+    throw new AppError('Authentication service not available', 503, true, 'SERVICE_UNAVAILABLE');
+  }
 
   // Get user profile
   const { data: profile, error: profileError } = await supabase

@@ -6,10 +6,17 @@ import { createClient } from '@supabase/supabase-js';
 import { cacheHelpers } from '../utils/redis';
 import { logger } from '../utils/logger';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Only create Supabase client if environment variables are available
+let supabase: ReturnType<typeof createClient> | null = null;
+
+if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  );
+} else {
+  logger.warn('Supabase not configured - RBAC service will be disabled');
+}
 
 // Permission definitions
 export const PERMISSIONS = {
@@ -203,6 +210,11 @@ export async function getUserPermissions(userId: string, companyId: string): Pro
   const cacheKey = `user_permissions:${userId}:${companyId}`;
 
   try {
+    // Return empty permissions if Supabase is not configured
+    if (!supabase) {
+      return [];
+    }
+
     // Try to get from cache first
     const cached = await cacheHelpers.get(cacheKey);
     if (cached) {
@@ -298,6 +310,10 @@ export async function grantCustomPermission(
   permission: string
 ): Promise<void> {
   try {
+    if (!supabase) {
+      throw new Error('Supabase not configured');
+    }
+
     const { data: profile } = await supabase
       .from('profiles')
       .select('custom_permissions')
@@ -336,6 +352,10 @@ export async function revokeCustomPermission(
   permission: string
 ): Promise<void> {
   try {
+    if (!supabase) {
+      throw new Error('Supabase not configured');
+    }
+
     const { data: profile } = await supabase
       .from('profiles')
       .select('custom_permissions')
