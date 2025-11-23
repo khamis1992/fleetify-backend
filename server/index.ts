@@ -15,7 +15,7 @@ import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 
 // Import routes
-import authRoutes from './routes/auth-minimal'; // Using minimal version for debugging
+import authRoutes from './routes/auth';
 import contractsRoutes from './routes/contracts';
 import customersRoutes from './routes/customers';
 import vehiclesRoutes from './routes/vehicles';

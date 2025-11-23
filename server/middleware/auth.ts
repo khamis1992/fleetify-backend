@@ -7,7 +7,7 @@ import jwt from 'jsonwebtoken';
 import { createClient } from '@supabase/supabase-js';
 import { AppError } from './errorHandler';
 import { logger } from '../utils/logger';
-// import { getUserPermissions } from '../services/rbac'; // Temporarily commented to debug import issues
+import { getUserPermissions } from '../services/rbac';
 
 // Extend Request interface to include user
 declare global {
@@ -89,9 +89,8 @@ export const validateAuth = async (
       throw new AppError('User not found or inactive', 401, true, 'USER_NOT_FOUND');
     }
 
-    // Get user permissions - temporarily hardcoded to debug import issues
-    // const permissions = await getUserPermissions(decoded.userId, profile.company_id);
-    const permissions = []; // Temporary empty permissions
+    // Get user permissions
+    const permissions = await getUserPermissions(decoded.userId, profile.company_id);
 
     // Attach user to request
     req.user = {
@@ -242,7 +241,7 @@ export const optionalAuth = async (
           email: profile.email,
           role: profile.role,
           companyId: profile.company_id,
-          permissions: [], // Temporary empty permissions to debug import issues
+          permissions: await getUserPermissions(profile.id, profile.company_id),
         };
       }
     }
