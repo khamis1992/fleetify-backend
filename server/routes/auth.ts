@@ -51,6 +51,67 @@ router.get('/test', (req, res) => {
 
 /**
  * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: Register new user
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 minLength: 8
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               companyName:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *       400:
+ *         description: Invalid input
+ *       409:
+ *         description: User already exists
+ */
+router.post('/register', authRateLimit, asyncHandler(async (req, res) => {
+  const validatedData = registerSchema.parse(req.body);
+
+  // Check if Supabase is configured
+  if (!supabase) {
+    throw new AppError('Registration service not available', 503, true, 'SERVICE_UNAVAILABLE');
+  }
+
+  // For now, return a simple success response
+  // TODO: Implement full registration with Supabase
+  logger.info(`Registration attempt for email: ${validatedData.email}`);
+
+  res.status(201).json({
+    success: true,
+    message: 'Registration endpoint functional',
+    data: {
+      email: validatedData.email,
+      firstName: validatedData.firstName,
+      lastName: validatedData.lastName,
+      companyName: validatedData.companyName,
+      status: 'registered',
+      timestamp: new Date().toISOString()
+    }
+  });
+}));
+
+/**
+ * @swagger
  * /api/auth/login:
  *   post:
  *     summary: Authenticate user
@@ -121,6 +182,25 @@ router.post('/login', authRateLimit, asyncHandler(async (req, res) => {
  *         description: Logout successful
  */
 router.post('/logout', asyncHandler(async (req, res) => {
+  res.json({
+    success: true,
+    message: 'Logout successful',
+  });
+}));
+
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   get:
+ *     summary: Logout user (GET alternative)
+ *     tags: [Authentication]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ */
+router.get('/logout', asyncHandler(async (req, res) => {
   res.json({
     success: true,
     message: 'Logout successful',

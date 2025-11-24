@@ -116,6 +116,28 @@ const swaggerOptions = {
 const specs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
+// API root endpoint
+app.get('/api', (req, res) => {
+  res.json({
+    name: 'FleetifyApp API',
+    version: '1.0.0',
+    description: 'Secure backend API for FleetifyApp fleet management system',
+    endpoints: {
+      auth: '/api/auth',
+      contracts: '/api/contracts',
+      customers: '/api/customers',
+      vehicles: '/api/vehicles',
+      employees: '/api/employees',
+      violations: '/api/violations',
+      invoices: '/api/invoices',
+      dashboard: '/api/dashboard',
+    },
+    documentation: '/api-docs',
+    health: '/health',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/contracts', validateAuth, cacheMiddleware({ ttl: 300 }), contractsRoutes);
