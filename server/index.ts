@@ -131,11 +131,24 @@ app.get('/api', (req, res) => {
       violations: '/api/violations',
       invoices: '/api/invoices',
       dashboard: '/api/dashboard',
+      monitoring: {
+        alerts: '/api/monitoring/alerts',
+        metrics: '/api/monitoring/metrics',
+      },
     },
     documentation: '/api-docs',
     health: '/health',
     timestamp: new Date().toISOString(),
   });
+});
+
+// Monitoring endpoints
+app.post('/api/monitoring/alerts', (req, res) => {
+  res.json({ success: true, message: 'Alert received' });
+});
+
+app.post('/api/monitoring/metrics', (req, res) => {
+  res.json({ success: true, message: 'Metrics received' });
 });
 
 // API routes
