@@ -69,6 +69,7 @@ const extractToken = (req: Request): string | null => {
 
 /**
  * Validates JWT token from Authorization header or HTTP-only cookie
+ * Supports both Supabase JWT tokens and custom JWT tokens
  */
 export const validateAuth = async (
   req: Request,
@@ -77,23 +78,25 @@ export const validateAuth = async (
 ): Promise<void> => {
   try {
     const token = extractToken(req);
+    const isSupabaseToken = req.headers.authorization?.startsWith('Bearer ') || false;
 
     if (!token) {
       throw new AppError('Authentication required - missing token', 401, true, 'MISSING_TOKEN');
     }
 
-    // Verify JWT token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
-
-    if (!decoded.userId && !decoded.sub) {
-      throw new AppError('Invalid authentication token', 401, true, 'INVALID_TOKEN');
-    }
-
-    const userId = decoded.userId || decoded.sub;
+    let userId: string;
+    let decoded: any;
 
     // Check if Supabase is configured
-    if (!supabase) {
-      // If Supabase is not configured, allow request with decoded user info
+    if (!supabase && !supabaseAnon) {
+      // If Supabase is not configured, verify with custom JWT secret
+      decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+      userId = decoded.userId || decoded.sub;
+      
+      if (!userId) {
+        throw new AppError('Invalid authentication token', 401, true, 'INVALID_TOKEN');
+      }
+
       logger.warn('Supabase not configured - using decoded token info only');
       req.user = {
         id: userId,
@@ -105,8 +108,40 @@ export const validateAuth = async (
       return next();
     }
 
-    // Get user profile from Supabase
-    const { data: profile, error: profileError } = await supabase
+    // For Supabase tokens (Bearer tokens), validate via Supabase Auth
+    if (isSupabaseToken && supabaseAnon) {
+      // Use supabaseAnon client to get user from the token
+      const { data: { user }, error: authError } = await supabaseAnon.auth.getUser(token);
+      
+      if (authError || !user) {
+        logger.warn('Supabase token validation failed', { error: authError?.message });
+        throw new AppError('Invalid authentication token', 401, true, 'INVALID_TOKEN');
+      }
+      userId = user.id;
+    } else {
+      // For custom JWT tokens (e.g., from cookies), verify with JWT_SECRET
+      try {
+        decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+        if (!decoded.userId && !decoded.sub) {
+          throw new AppError('Invalid authentication token', 401, true, 'INVALID_TOKEN');
+        }
+        userId = decoded.userId || decoded.sub;
+      } catch (jwtError) {
+        // If custom JWT fails, try Supabase validation as fallback
+        if (supabaseAnon) {
+          const { data: { user }, error: authError } = await supabaseAnon.auth.getUser(token);
+          if (authError || !user) {
+            throw new AppError('Invalid authentication token', 401, true, 'INVALID_TOKEN');
+          }
+          userId = user.id;
+        } else {
+          throw jwtError;
+        }
+      }
+    }
+
+    // Get user profile from Supabase using service role client
+    const { data: profile, error: profileError } = await supabase!
       .from('profiles')
       .select(`
         id,
@@ -144,6 +179,7 @@ export const validateAuth = async (
       role: profile.role,
       companyId: profile.company_id,
       ip: req.ip,
+      tokenType: isSupabaseToken ? 'supabase' : 'custom',
     });
 
     next();
@@ -249,6 +285,7 @@ export const requireCompanyAccess = async (
 
 /**
  * Optional authentication - attaches user if token exists, but doesn't require it
+ * Supports both Supabase JWT tokens and custom JWT tokens
  */
 export const optionalAuth = async (
   req: Request,
@@ -257,13 +294,38 @@ export const optionalAuth = async (
 ): Promise<void> => {
   try {
     const token = extractToken(req);
+    const isSupabaseToken = req.headers.authorization?.startsWith('Bearer ') || false;
 
     if (!token) {
       return next();
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
-    const userId = decoded.userId || decoded.sub;
+    let userId: string | null = null;
+    let decoded: any;
+
+    // Try Supabase token validation first for Bearer tokens
+    if (isSupabaseToken && supabaseAnon) {
+      const { data: { user }, error } = await supabaseAnon.auth.getUser(token);
+      if (!error && user) {
+        userId = user.id;
+      }
+    }
+
+    // If not a Supabase token or validation failed, try custom JWT
+    if (!userId) {
+      try {
+        decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+        userId = decoded.userId || decoded.sub;
+      } catch {
+        // If custom JWT fails and we haven't tried Supabase yet, try it now
+        if (!isSupabaseToken && supabaseAnon) {
+          const { data: { user }, error } = await supabaseAnon.auth.getUser(token);
+          if (!error && user) {
+            userId = user.id;
+          }
+        }
+      }
+    }
 
     if (userId && supabase) {
       const { data: profile } = await supabase
@@ -282,7 +344,7 @@ export const optionalAuth = async (
           permissions: await getUserPermissions(profile.id, profile.company_id),
         };
       }
-    } else if (userId) {
+    } else if (userId && decoded) {
       // If Supabase not configured, use decoded info
       req.user = {
         id: userId,
